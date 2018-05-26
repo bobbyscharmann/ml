@@ -1,7 +1,7 @@
 """
 May 23, 2018
 
-    Download and untar a datafilei. Liberally taken from
+    Download and untar a datafile. Liberally taken from
     Hands on Machine Learning by Aurelien Geron page 44.
 
 Scharmann
@@ -11,6 +11,15 @@ import numpy as np
 import os
 import pandas as pd
 from pandas.plotting import scatter_matrix
+from sklearn.impute import SimpleImputer
+
+# Install development version of scikit-learn by using
+# to use CategoricalEncoder 
+# pip install git+git://github.com/scikit-learn/scikit-learn.git
+from sklearn.preprocessing import OneHotEncoder, CategoricalEncoder
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.preprocessing import StandardScaler
+from sklearn.base import BaseEstimator, TransformerMixin
 from six.moves import urllib
 import tarfile
 
@@ -41,13 +50,20 @@ def split_train_test(data, test_ratio):
     train_indices = shuffled_indices[test_set_size:]
     return data.iloc[train_indices], data.iloc[test_indices]
 
+class DataFrameSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, attribute_names):
+        self.attribute_names = attribute_names
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X):
+        return X[self.attribute_names].values
 
 if __name__ == "__main__":
     fetch_housing_data()
     housing = load_housing_data()
 
     print(housing.describe())
-    housing.hist(bins=50, figsize=(20,15))
+    # housing.hist(bins=50, figsize=(20,15))
     housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
                  s=housing["population"]/100, label="population", 
                  figsize=(10,7), c="median_house_value", 
@@ -59,7 +75,55 @@ if __name__ == "__main__":
     corr_matrix = housing.corr()
 
     attributes = ["median_house_value", "median_income", "total_rooms"]
-    scatter_matrix(housing[attributes], figsize=(20,7))
-    plt.show()
+    # scatter_matrix(housing[attributes], figsize=(20,7))
+    # plt.show()
     print(corr_matrix["median_house_value"].sort_values(ascending=False))
+    
+    # Use an SimpleImputer to set missing values to the median
+    imputer = SimpleImputer(strategy="median")
+    housing_num = housing.drop("ocean_proximity", axis=1)
+    imputer.fit(housing_num)
+    print(imputer.statistics_)
+    X = imputer.transform(housing_num)
+    housing_tr = pd.DataFrame(X, columns=housing_num.columns)
+    
+    # Prepare one-hot encoding for categorical values
+    housing_cat = housing["ocean_proximity"]
+    housing_cat_encoded, housing_categories = housing_cat.factorize()
+
+    encoder = OneHotEncoder()
+    housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1,1))
+
+    num_attributes = list(housing_num)
+    cat_attributes = ["ocean_proximity"]
+ 
+    num_pipeline = Pipeline([
+                            ('selector', DataFrameSelector(num_attributes)),
+                            ('imputer', SimpleImputer(strategy="median")),
+                            ('std_scaler', StandardScaler()),
+                            ])
+
+    cat_pipeline = Pipeline([
+                            ('selector', DataFrameSelector(cat_attributes)),
+                            ('cat_encoder', CategoricalEncoder(encoding="onehot-dense")),
+                            ])
+    full_pipeline = FeatureUnion(transformer_list=[
+                        ("num_pipeline", num_pipeline),
+                        ("cat_pipeline", cat_pipeline),
+                        ])
+
+    housing_prepared = full_pipeline.fit_transform(housing)
+    print(housing_prepared.shape) 
     print("Finished\n")
+
+
+
+
+
+
+
+
+
+
+
+
