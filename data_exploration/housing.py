@@ -20,8 +20,12 @@ from sklearn.preprocessing import OneHotEncoder, CategoricalEncoder
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.model_selection import StratifiedShuffleSplit
 from six.moves import urllib
 import tarfile
+
+from sklearn.linear_model import LinearRegression 
+from sklearn.metrics import mean_squared_error
 
 DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
 HOUSING_PATH = os.path.join("datasets", "housing")
@@ -61,6 +65,8 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
 if __name__ == "__main__":
     fetch_housing_data()
     housing = load_housing_data()
+    housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
+    housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
 
     print(housing.describe())
     # housing.hist(bins=50, figsize=(20,15))
@@ -70,9 +76,16 @@ if __name__ == "__main__":
                  cmap=plt.get_cmap("jet"), colorbar=True)
     plt.legend()
     # plt.show()    
-    train_set, test_set = split_train_test(housing, 0.5)
+    train_set, test_set = split_train_test(housing, 0.2)
     print(len(train_set), "train +", len(test_set), "test")
     corr_matrix = housing.corr()
+    split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    for train_index, test_index in split.split(housing, housing["income_cat"]):
+        strat_train_set = housing.loc[train_index]
+        strat_test_set = housing.loc[test_index]
+    housing = strat_train_set.drop("median_house_value", axis=1)
+    housing_labels = strat_train_set["median_house_value"].copy()
+
 
     attributes = ["median_house_value", "median_income", "total_rooms"]
     # scatter_matrix(housing[attributes], figsize=(20,7))
@@ -80,12 +93,12 @@ if __name__ == "__main__":
     print(corr_matrix["median_house_value"].sort_values(ascending=False))
     
     # Use an SimpleImputer to set missing values to the median
-    imputer = SimpleImputer(strategy="median")
+#    imputer = SimpleImputer(strategy="median")
     housing_num = housing.drop("ocean_proximity", axis=1)
-    imputer.fit(housing_num)
-    print(imputer.statistics_)
-    X = imputer.transform(housing_num)
-    housing_tr = pd.DataFrame(X, columns=housing_num.columns)
+ #  imputer.fit(housing_num)
+ #  print(imputer.statistics_)
+ #  X = imputer.transform(housing_num)
+ #   housing_tr = pd.DataFrame(X, columns=housing_num.columns)
     
     # Prepare one-hot encoding for categorical values
     housing_cat = housing["ocean_proximity"]
@@ -113,7 +126,16 @@ if __name__ == "__main__":
                         ])
 
     housing_prepared = full_pipeline.fit_transform(housing)
-    print(housing_prepared.shape) 
+    
+    m = LinearRegression()
+    m.fit(housing_prepared, housing_labels)
+    housing_predictions = m.predict(housing_prepared)
+    m_mse = mean_squared_error(housing_labels, housing_predictions)
+    m_rmse = np.sqrt(m_mse)
+    print(m_rmse)
+
+
+
     print("Finished\n")
 
 
