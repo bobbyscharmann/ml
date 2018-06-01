@@ -24,7 +24,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from six.moves import urllib
 import tarfile
 
-from sklearn.linear_model import LinearRegression 
+from sklearn.ensemble import RandomForestRegressor 
 from sklearn.metrics import mean_squared_error
 
 DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     housing_prepared = full_pipeline.fit_transform(housing)
     
-    m = LinearRegression()
+    m = RandomForestRegressor()
     m.fit(housing_prepared, housing_labels)
     housing_predictions = m.predict(housing_prepared)
     m_mse = mean_squared_error(housing_labels, housing_predictions)
