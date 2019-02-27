@@ -73,7 +73,7 @@ num_epochs = 50
 # Configure the plot figure. Note the subplot for each initial guess and
 # learning rate
 gs = gridspec.GridSpec(len(initial_guesses), len(learning_rates))
-fig = plt.figure(tight_layout=True)
+fig = plt.figure(tight_layout=True, figsize=(20, 10))
 
 # Loop over each initial guess and learning rate and run SGD and plot it
 for i in range(len(initial_guesses)):
