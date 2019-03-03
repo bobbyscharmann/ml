@@ -31,7 +31,7 @@ DOWNLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml/master/"
 HOUSING_PATH = os.path.join("datasets", "housing")
 HOUSING_URL = DOWNLOAD_ROOT + "datasets/housing/housing.tgz"
 
-# Download hosing data and extract it
+# Download housing data and extract it
 def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     if not os.path.isdir(housing_path):
         os.makedirs(housing_path)
@@ -69,13 +69,13 @@ if __name__ == "__main__":
     housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
 
     print(housing.describe())
-    # housing.hist(bins=50, figsize=(20,15))
+    housing.hist(bins=50, figsize=(20,15))
     housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
                  s=housing["population"]/100, label="population", 
                  figsize=(10,7), c="median_house_value", 
                  cmap=plt.get_cmap("jet"), colorbar=True)
     plt.legend()
-    # plt.show()    
+    plt.show()    
     train_set, test_set = split_train_test(housing, 0.2)
     print(len(train_set), "train +", len(test_set), "test")
     corr_matrix = housing.corr()
@@ -88,8 +88,8 @@ if __name__ == "__main__":
 
 
     attributes = ["median_house_value", "median_income", "total_rooms"]
-    # scatter_matrix(housing[attributes], figsize=(20,7))
-    # plt.show()
+    #scatter_matrix(housing[attributes], figsize=(20,7))
+    #plt.show()
     print(corr_matrix["median_house_value"].sort_values(ascending=False))
     
     # Use an SimpleImputer to set missing values to the median
