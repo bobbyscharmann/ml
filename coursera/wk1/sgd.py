@@ -47,7 +47,6 @@ def gradient_descent(initial_guess, learning_rate, epoch):
     for i in range(epoch):
         current_x = 0
         current_y = 0
-        if USE_CONCAVE:
             current_x = previous_x - learning_rate * (cost_function_concave(previous_x))
             current_y = func_y_concave(current_x)
         else:
