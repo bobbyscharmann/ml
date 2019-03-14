@@ -11,20 +11,20 @@ else:
     device_name = "/cpu:0"
 
 with tf.device(device_name):
-    first = random_matrix = tf.constant([1, 2, 3, 4])
-    second = random_matrix = tf.constant([1, 2, 3, 4])
-    dot_operation = tf.multiply(first, second)
+    random_matrix = tf.random_uniform(shape=shape, minval=0, maxval=1)
+    dot_operation = tf.matmul(random_matrix, tf.transpose(random_matrix))
+    sum_operation = tf.reduce_sum(dot_operation)
 
 
 startTime = datetime.now()
 with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as session:
-    result = session.run(dot_operation)
-    print("result is: ", result)
+    result = session.run(sum_operation)
+    print(result)
 
 # It can be hard to see the results on the terminal with lots of output -- add 
 # some newlines to improve readability.
 print("\n" * 5)
-print("Device:", device_name)
+print("Shape:", shape, "Device:", device_name)
 print("Time taken:", datetime.now() - startTime)
 
 print("\n" * 5)
